@@ -1,10 +1,25 @@
 <!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>$Title$</title>
+    <title>OAuth2 Login </title>
 </head>
 <body>
-$END$
+<div style="float: right">
+    <div style="float:left">
+        <span style="font-weight:bold">User: ${userName} </span>
+    </div>
+    <div style="float:none">&nbsp;</div>
+    <div style="float:right">
+        <form action="#" action="@{/logout}" method="post">
+            <input type="submit" value="Logout"/>
+        </form>
+    </div>
+</div>
+<h1>OAuth 2.0 Login with Spring Security</h1>
+<div>
+    You are successfully logged in <span style="font-weight:bold" text="${userName}"></span>
+</div>
 </body>
 </html>
