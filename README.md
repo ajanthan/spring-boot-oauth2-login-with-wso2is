@@ -58,7 +58,7 @@ Add the template with holder for displaying username.
 
 ```html
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -67,20 +67,83 @@ Add the template with holder for displaying username.
 <body>
 <div style="float: right">
     <div style="float:left">
-        <span style="font-weight:bold">User: ${userName} </span>
+        <span style="font-weight:bold">User: <span th:text=${userName}></span> </span>
     </div>
     <div style="float:none">&nbsp;</div>
     <div style="float:right">
-        <form action="#" action="@{/logout}" method="post">
+        <form th:action="@{/logout}" method="post">
             <input type="submit" value="Logout"/>
         </form>
     </div>
 </div>
 <h1>OAuth 2.0 Login with Spring Security</h1>
 <div>
-    You are successfully logged in <span style="font-weight:bold" text="${userName}"></span>
+    You are successfully logged in as <span style="font-weight:bold" th:text="${userName}"></span>
 </div>
 </body>
 </html>
 
+```
+
+## Step 4
+
+Add OAuth2LoginConfig class to configure InMemoryClientRegistrationRepository with detail specific to WSO2 and the registered OAuth2 client that is going to be used for login.
+
+```java
+
+package com.github.ajanthan.spring.security.oauth2loginsample;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
+
+@Configuration
+public class OAuth2LoginConfig {
+    private static String CLIENT_PROPERTY_KEY = "spring.security.oauth2.client.registration.wso2.";
+    private static String PROVIDER_PROPERTY_KEY = "spring.security.oauth2.client.provider.wso2.";
+    @Autowired
+    private Environment env;
+
+    @Bean
+    public ClientRegistrationRepository
+    clientRegistrationRepository() {
+        return new InMemoryClientRegistrationRepository(this.WSO2ClientRegistration());
+    }
+
+    private ClientRegistration WSO2ClientRegistration() {
+        return ClientRegistration.withRegistrationId("wso2")
+                .clientId(env.getProperty(CLIENT_PROPERTY_KEY + "client-id"))
+                .clientSecret(env.getProperty(CLIENT_PROPERTY_KEY + "client-secret"))
+                .clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .redirectUriTemplate("{baseUrl}/login/oauth2/code/{registrationId}")
+                .scope("openid", "profile", "email", "address", "phone")
+                .authorizationUri(env.getProperty(PROVIDER_PROPERTY_KEY + "authorization-uri"))
+                .tokenUri(env.getProperty(PROVIDER_PROPERTY_KEY + "token-uri"))
+                .userInfoUri(env.getProperty(PROVIDER_PROPERTY_KEY + "user-info-uri"))
+                .userNameAttributeName(IdTokenClaimNames.SUB)
+                .jwkSetUri(env.getProperty(PROVIDER_PROPERTY_KEY + "jwk-set-uri"))
+                .clientName("WSO2")
+                .build();
+    }
+}
+
+```
+This implemetation is going to read certain parameters from the application.properties. This is a sample application properties.
+
+```properties
+spring.thymeleaf.cache=false
+spring.security.oauth2.client.registration.wso2.client-id=ilv61uSGnTE8Raulnpjo7jnydf8a #Client Id of registered service provider in WSO2 identity server
+spring.security.oauth2.client.registration.wso2.client-secret=9KAYRlx3WFnGLh_mmIpW0l7oJmka #Client secret of registered service provider in WSO2 identity server
+spring.security.oauth2.client.provider.wso2.authorization-uri=http://idp.example.com:9763/oauth2/authorize
+spring.security.oauth2.client.provider.wso2.token-uri=http://idp.example.com:9763/oauth2/token
+spring.security.oauth2.client.provider.wso2.user-info-uri=http://idp.example.com:9763/oauth2/userinfo
+spring.security.oauth2.client.provider.wso2.jwk-set-uri=http://idp.example.com:9763/oauth2/jwks
 ```
